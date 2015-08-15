@@ -1,856 +1,1063 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <title>スカッシュゲームを作る - パドルでボールをコントロールできるようにする（２）</title>
-    <meta name="keywords" content="WebGL,HTML5,three.js" />
-    <meta name="description" content="WebGL,HTML5,three.js" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
-    <meta charset="UTF-8">
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.js"></script>
-    <script type="text/javascript" src="dsp.js" ></script>
-    <script type="text/javascript" src="audio.js" ></script>
-    <style>
-        html {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
+  <title>ブロック崩しを作る（１）</title>
+  <meta name="keywords" content="WebGL,HTML5,three.js" />
+  <meta name="description" content="WebGL,HTML5,three.js" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta charset="UTF-8">
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.js"></script>
+  <script type="text/javascript" src="dsp.js"></script>
+  <script type="text/javascript" src="audio.js"></script>
+  <style>
+    html {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
 
-        body {
-            width: 100%;
-            height: 100%;
-            margin: 4px;
-            padding: 0;
-            border: 0;
-            text-align: center;
-            margin-left: auto;
-            margin-right: auto;
-        }
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 4px;
+      padding: 0;
+      border: 0;
+      text-align: center;
+      margin-left: auto;
+      margin-right: auto;
+    }
 
-        #console {
-            margin-left: auto;
-            margin-right: auto;
-            border: 0;
-            padding: 0;
-        }
-    </style>
+    #console {
+      margin-left: auto;
+      margin-right: auto;
+      border: 0;
+      padding: 0;
+    }
+  </style>
 </head>
 <body>
-    <div id="content"></div>
-    <script type="text/javascript">
-        const ASCII_CHARS = [
-            [
-                0,0,0,0,0,
-                0,0,0,0,0,
-                0,0,0,0,0,
-                0,0,0,0,0,
-                0,0,0,0,0
-            ],
-            [
-                0,0,1,0,0,
-                0,0,1,0,0,
-                0,0,1,0,0,
-                0,0,0,0,0,
-                0,0,1,0,0
-            ],
-            [
-                0,1,0,1,0,
-                0,1,0,1,0,
-                0,0,0,0,0,
-                0,0,0,0,0,
-                0,0,0,0,0
-            ],
-            [
-                0,1,0,1,0,
-                1,1,1,1,1,
-                0,1,0,1,0,
-                1,1,1,1,1,
-                0,1,0,1,0
-            ],
-            [
-                1,1,1,1,1,
-                1,0,1,0,0,
-                1,1,1,1,1,
-                0,0,1,0,1,
-                1,1,1,1,1
-            ],
-            [
-                1,1,0,0,1,
-                1,1,0,1,0,
-                0,0,1,0,0,
-                0,1,0,1,1,
-                1,0,0,1,1
-            ],
-            [
-                1,1,1,0,0,
-                1,0,1,0,0,
-                0,1,1,0,1,
-                1,0,0,1,0,
-                1,1,1,0,1
-            ],
-            [
-                0,0,1,0,0,
-                0,0,1,0,0,
-                0,0,0,0,0,
-                0,0,0,0,0,
-                0,0,0,0,0
-            ],
-            [
-                0,0,1,1,0,
-                0,1,0,0,0,
-                0,1,0,0,0,
-                0,1,0,0,0,
-                0,0,1,1,0
-            ],
-            [
-                0,1,1,0,0,
-                0,0,0,1,0,
-                0,0,0,1,0,
-                0,0,0,1,0,
-                0,1,1,0,0
-            ],
-            [
-                1,0,1,0,1,
-                0,1,1,1,0,
-                1,1,1,1,1,
-                0,1,1,1,0,
-                1,0,1,0,1
-            ],
-            [
-                0,0,1,0,0,
-                0,0,1,0,0,
-                1,1,1,1,1,
-                0,0,1,0,0,
-                0,0,1,0,0
-            ],
-            [
-                0,0,0,0,0,
-                0,0,0,0,0,
-                0,0,0,0,0,
-                0,0,1,0,0,
-                0,1,0,0,0
-            ],
-            [
-                0,0,0,0,0,
-                0,0,0,0,0,
-                1,1,1,1,1,
-                0,0,0,0,0,
-                0,0,0,0,0
-            ],
-            [
-                0,0,0,0,0,
-                0,0,0,0,0,
-                0,0,0,0,0,
-                0,0,0,0,0,
-                0,0,1,0,0
-            ],
-            [
-                0,0,0,0,1,
-                0,0,0,1,0,
-                0,0,1,0,0,
-                0,1,0,0,0,
-                1,0,0,0,0
-            ],
-            [1,1,1,1,1,
-             1,1,0,0,1,
-             1,0,1,0,1,
-             1,0,0,1,1,
-             1,1,1,1,1],
-            [0,1,1,0,0,
-             0,0,1,0,0,
-             0,0,1,0,0,
-             0,0,1,0,0,
-             0,1,1,1,0],
-            [1,1,1,1,1,
-             1,0,0,0,1,
-             0,0,1,1,0,
-             0,1,0,0,0,
-             1,1,1,1,1],
-            [1,1,1,1,1,
-             0,0,0,0,1,
-             1,1,1,1,1,
-             0,0,0,0,1,
-             1,1,1,1,1],
-            [1,0,0,1,0,
-             1,0,0,1,0,
-             1,0,0,1,0,
-             1,1,1,1,1,
-             0,0,0,1,0],
-            [1,1,1,1,1,
-             1,0,0,0,0,
-             1,1,1,1,1,
-             0,0,0,0,1,
-             1,1,1,1,1],
-            [1,1,1,1,1,
-             1,0,0,0,0,
-             1,1,1,1,1,
-             1,0,0,0,1,
-             1,1,1,1,1],
-            [1,1,1,1,1,
-             1,0,0,1,0,
-             0,0,1,0,0,
-             0,1,0,0,0,
-             1,0,0,0,0],
-            [1,1,1,1,1,
-             1,0,0,0,1,
-             1,1,1,1,1,
-             1,0,0,0,1,
-             1,1,1,1,1],
-            [1,1,1,1,1,
-             1,0,0,0,1,
-             1,1,1,1,1,
-             0,0,0,0,1,
-             1,1,1,1,1],
-            [
-                0,0,0,0,0,
-                0,0,1,0,0,
-                0,0,0,0,0,
-                0,0,1,0,0,
-                0,0,0,0,0
-            ],
-            [
-                0,0,0,0,0,
-                0,0,1,0,0,
-                0,0,0,0,0,
-                0,0,1,0,0,
-                0,1,0,0,0
-            ],
-            [
-                0,0,0,1,0,
-                0,0,1,0,0,
-                0,1,0,0,0,
-                0,0,1,0,0,
-                0,0,0,1,0
-            ],
-            [
-                0,0,0,0,0,
-                1,1,1,1,1,
-                0,0,0,0,0,
-                1,1,1,1,1,
-                0,0,0,0,0
-            ],
-            [
-                0,1,0,0,0,
-                0,0,1,0,0,
-                0,0,0,1,0,
-                0,0,1,0,0,
-                0,1,0,0,0
-            ],
-            [
-                1,1,1,1,1,
-                1,0,0,0,1,
-                0,0,1,1,1,
-                0,0,0,0,0,
-                0,0,1,0,0
-            ],
-            [
-                0,1,1,1,0,
-                1,0,0,0,1,
-                1,0,1,1,1,
-                1,0,0,0,0,
-                0,1,1,1,1
-            ],
-            [
-                1,1,1,1,1,
-                1,0,0,0,1,
-                1,1,1,1,1,
-                1,0,0,0,1,
-                1,0,0,0,1
-            ],
-            [
-                1,1,1,1,1,
-                1,0,0,0,1,
-                1,1,1,1,0,
-                1,0,0,0,1,
-                1,1,1,1,1
-            ],
-            [
-                1,1,1,1,1,
-                1,0,0,0,0,
-                1,0,0,0,0,
-                1,0,0,0,0,
-                1,1,1,1,1
-            ],
-            [
-                1,1,1,1,0,
-                1,0,0,0,1,
-                1,0,0,0,1,
-                1,0,0,0,1,
-                1,1,1,1,0
-            ],
-            [
-                1,1,1,1,1,
-                1,0,0,0,0,
-                1,1,1,1,1,
-                1,0,0,0,0,
-                1,1,1,1,1
-            ],
-            [
-                1,1,1,1,1,
-                1,0,0,0,0,
-                1,1,1,1,1,
-                1,0,0,0,0,
-                1,0,0,0,0
-            ],
-            [
-                1,1,1,1,1,
-                1,0,0,0,0,
-                1,0,1,1,1,
-                1,0,0,0,1,
-                1,1,1,1,1
-            ],
-            [
-                1,0,0,0,1,
-                1,0,0,0,1,
-                1,1,1,1,1,
-                1,0,0,0,1,
-                1,0,0,0,1
-            ],
-            [
-                0,0,1,0,0,
-                0,0,1,0,0,
-                0,0,1,0,0,
-                0,0,1,0,0,
-                0,0,1,0,0
-            ],
-            [
-                1,1,1,1,1,
-                0,0,1,0,0,
-                0,0,1,0,0,
-                1,0,1,0,0,
-                1,1,1,0,0
-            ],
-            [
-                1,0,0,,1,
-                1,0,0,1,0,
-                1,1,1,0,0,
-                1,0,0,1,0,
-                1,0,0,0,1
-            ],
-            [
-                1,0,0,0,0,
-                1,0,0,0,0,
-                1,0,0,0,0,
-                1,0,0,0,0,
-                1,1,1,1,1
-            ],
-            [
-                1,1,0,1,1,
-                1,0,1,0,1,
-                1,0,0,0,1,
-                1,0,0,0,1,
-                1,0,0,0,1
-            ],
-            [
-                1,0,0,0,1,
-                1,1,0,0,1,
-                1,0,1,0,1,
-                1,0,0,1,1,
-                1,0,0,0,1
-            ],
-            [
-                1,1,1,1,1,
-                1,0,0,0,1,
-                1,0,0,0,1,
-                1,0,0,0,1,
-                1,1,1,1,1
-            ],
-            [
-                1,1,1,1,1,
-                1,0,0,0,1,
-                1,1,1,1,1,
-                1,0,0,0,0,
-                1,0,0,0,0
-            ],
-            [
-                1,1,1,1,1,
-                1,0,0,0,1,
-                1,0,0,0,1,
-                1,0,0,1,1,
-                1,1,1,1,1
-            ],
-            [
-                1,1,1,1,1,
-                1,0,0,0,1,
-                1,1,1,1,0,
-                1,0,0,0,1,
-                1,0,0,0,1
-            ],
-            [
-                1,1,1,1,1,
-                1,0,0,0,0,
-                1,1,1,1,1,
-                0,0,0,0,1,
-                1,1,1,1,1
-            ],
-            [
-                1,1,1,1,1,
-                0,0,1,0,0,
-                0,0,1,0,0,
-                0,0,1,0,0,
-                0,0,1,0,0
-            ],
-            [
-                1,0,0,0,1,
-                1,0,0,0,1,
-                1,0,0,0,1,
-                1,0,0,0,1,
-                1,1,1,1,1
-            ],
-            [
-                1,0,0,0,1,
-                1,0,0,0,1,
-                0,1,0,1,0,
-                0,1,0,1,0,
-                0,0,1,0,0
-            ],
-            [
-                1,0,1,0,1,
-                1,0,1,0,1,
-                1,0,1,0,1,
-                1,0,1,0,1,
-                1,1,1,1,1
-            ],
-            [
-                1,0,0,0,1,
-                0,1,0,1,0,
-                0,0,1,0,0,
-                0,1,0,1,0,
-                1,0,0,0,1
-            ],
-            [
-                1,0,0,0,1,
-                0,1,0,1,0,
-                0,0,1,0,0,
-                0,0,1,0,0,
-                0,0,1,0,0
-            ],
-            [
-                1,1,1,1,1,
-                0,0,0,1,0,
-                0,0,1,0,0,
-                0,1,0,0,0,
-                1,1,1,1,1
+  <div id="content"></div>
+  <script type="text/javascript">
+    const ASCII_CHARS = [
+        [
+            0,0,0,0,0,
+            0,0,0,0,0,
+            0,0,0,0,0,
+            0,0,0,0,0,
+            0,0,0,0,0
+        ],
+        [
+            0,0,1,0,0,
+            0,0,1,0,0,
+            0,0,1,0,0,
+            0,0,0,0,0,
+            0,0,1,0,0
+        ],
+        [
+            0,1,0,1,0,
+            0,1,0,1,0,
+            0,0,0,0,0,
+            0,0,0,0,0,
+            0,0,0,0,0
+        ],
+        [
+            0,1,0,1,0,
+            1,1,1,1,1,
+            0,1,0,1,0,
+            1,1,1,1,1,
+            0,1,0,1,0
+        ],
+        [
+            1,1,1,1,1,
+            1,0,1,0,0,
+            1,1,1,1,1,
+            0,0,1,0,1,
+            1,1,1,1,1
+        ],
+        [
+            1,1,0,0,1,
+            1,1,0,1,0,
+            0,0,1,0,0,
+            0,1,0,1,1,
+            1,0,0,1,1
+        ],
+        [
+            1,1,1,0,0,
+            1,0,1,0,0,
+            0,1,1,0,1,
+            1,0,0,1,0,
+            1,1,1,0,1
+        ],
+        [
+            0,0,1,0,0,
+            0,0,1,0,0,
+            0,0,0,0,0,
+            0,0,0,0,0,
+            0,0,0,0,0
+        ],
+        [
+            0,0,1,1,0,
+            0,1,0,0,0,
+            0,1,0,0,0,
+            0,1,0,0,0,
+            0,0,1,1,0
+        ],
+        [
+            0,1,1,0,0,
+            0,0,0,1,0,
+            0,0,0,1,0,
+            0,0,0,1,0,
+            0,1,1,0,0
+        ],
+        [
+            1,0,1,0,1,
+            0,1,1,1,0,
+            1,1,1,1,1,
+            0,1,1,1,0,
+            1,0,1,0,1
+        ],
+        [
+            0,0,1,0,0,
+            0,0,1,0,0,
+            1,1,1,1,1,
+            0,0,1,0,0,
+            0,0,1,0,0
+        ],
+        [
+            0,0,0,0,0,
+            0,0,0,0,0,
+            0,0,0,0,0,
+            0,0,1,0,0,
+            0,1,0,0,0
+        ],
+        [
+            0,0,0,0,0,
+            0,0,0,0,0,
+            1,1,1,1,1,
+            0,0,0,0,0,
+            0,0,0,0,0
+        ],
+        [
+            0,0,0,0,0,
+            0,0,0,0,0,
+            0,0,0,0,0,
+            0,0,0,0,0,
+            0,0,1,0,0
+        ],
+        [
+            0,0,0,0,1,
+            0,0,0,1,0,
+            0,0,1,0,0,
+            0,1,0,0,0,
+            1,0,0,0,0
+        ],
+        [1,1,1,1,1,
+         1,1,0,0,1,
+         1,0,1,0,1,
+         1,0,0,1,1,
+         1,1,1,1,1],
+        [0,1,1,0,0,
+         0,0,1,0,0,
+         0,0,1,0,0,
+         0,0,1,0,0,
+         0,1,1,1,0],
+        [1,1,1,1,1,
+         1,0,0,0,1,
+         0,0,1,1,0,
+         0,1,0,0,0,
+         1,1,1,1,1],
+        [1,1,1,1,1,
+         0,0,0,0,1,
+         1,1,1,1,1,
+         0,0,0,0,1,
+         1,1,1,1,1],
+        [1,0,0,1,0,
+         1,0,0,1,0,
+         1,0,0,1,0,
+         1,1,1,1,1,
+         0,0,0,1,0],
+        [1,1,1,1,1,
+         1,0,0,0,0,
+         1,1,1,1,1,
+         0,0,0,0,1,
+         1,1,1,1,1],
+        [1,1,1,1,1,
+         1,0,0,0,0,
+         1,1,1,1,1,
+         1,0,0,0,1,
+         1,1,1,1,1],
+        [1,1,1,1,1,
+         1,0,0,1,0,
+         0,0,1,0,0,
+         0,1,0,0,0,
+         1,0,0,0,0],
+        [1,1,1,1,1,
+         1,0,0,0,1,
+         1,1,1,1,1,
+         1,0,0,0,1,
+         1,1,1,1,1],
+        [1,1,1,1,1,
+         1,0,0,0,1,
+         1,1,1,1,1,
+         0,0,0,0,1,
+         1,1,1,1,1],
+        [
+            0,0,0,0,0,
+            0,0,1,0,0,
+            0,0,0,0,0,
+            0,0,1,0,0,
+            0,0,0,0,0
+        ],
+        [
+            0,0,0,0,0,
+            0,0,1,0,0,
+            0,0,0,0,0,
+            0,0,1,0,0,
+            0,1,0,0,0
+        ],
+        [
+            0,0,0,1,0,
+            0,0,1,0,0,
+            0,1,0,0,0,
+            0,0,1,0,0,
+            0,0,0,1,0
+        ],
+        [
+            0,0,0,0,0,
+            1,1,1,1,1,
+            0,0,0,0,0,
+            1,1,1,1,1,
+            0,0,0,0,0
+        ],
+        [
+            0,1,0,0,0,
+            0,0,1,0,0,
+            0,0,0,1,0,
+            0,0,1,0,0,
+            0,1,0,0,0
+        ],
+        [
+            1,1,1,1,1,
+            1,0,0,0,1,
+            0,0,1,1,1,
+            0,0,0,0,0,
+            0,0,1,0,0
+        ],
+        [
+            0,1,1,1,0,
+            1,0,0,0,1,
+            1,0,1,1,1,
+            1,0,0,0,0,
+            0,1,1,1,1
+        ],
+        [
+            1,1,1,1,1,
+            1,0,0,0,1,
+            1,1,1,1,1,
+            1,0,0,0,1,
+            1,0,0,0,1
+        ],
+        [
+            1,1,1,1,1,
+            1,0,0,0,1,
+            1,1,1,1,0,
+            1,0,0,0,1,
+            1,1,1,1,1
+        ],
+        [
+            1,1,1,1,1,
+            1,0,0,0,0,
+            1,0,0,0,0,
+            1,0,0,0,0,
+            1,1,1,1,1
+        ],
+        [
+            1,1,1,1,0,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,1,1,1,0
+        ],
+        [
+            1,1,1,1,1,
+            1,0,0,0,0,
+            1,1,1,1,1,
+            1,0,0,0,0,
+            1,1,1,1,1
+        ],
+        [
+            1,1,1,1,1,
+            1,0,0,0,0,
+            1,1,1,1,1,
+            1,0,0,0,0,
+            1,0,0,0,0
+        ],
+        [
+            1,1,1,1,1,
+            1,0,0,0,0,
+            1,0,1,1,1,
+            1,0,0,0,1,
+            1,1,1,1,1
+        ],
+        [
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,1,1,1,1,
+            1,0,0,0,1,
+            1,0,0,0,1
+        ],
+        [
+            0,0,1,0,0,
+            0,0,1,0,0,
+            0,0,1,0,0,
+            0,0,1,0,0,
+            0,0,1,0,0
+        ],
+        [
+            1,1,1,1,1,
+            0,0,1,0,0,
+            0,0,1,0,0,
+            1,0,1,0,0,
+            1,1,1,0,0
+        ],
+        [
+            1,0,0,,1,
+            1,0,0,1,0,
+            1,1,1,0,0,
+            1,0,0,1,0,
+            1,0,0,0,1
+        ],
+        [
+            1,0,0,0,0,
+            1,0,0,0,0,
+            1,0,0,0,0,
+            1,0,0,0,0,
+            1,1,1,1,1
+        ],
+        [
+            1,1,0,1,1,
+            1,0,1,0,1,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,0,0,0,1
+        ],
+        [
+            1,0,0,0,1,
+            1,1,0,0,1,
+            1,0,1,0,1,
+            1,0,0,1,1,
+            1,0,0,0,1
+        ],
+        [
+            1,1,1,1,1,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,1,1,1,1
+        ],
+        [
+            1,1,1,1,1,
+            1,0,0,0,1,
+            1,1,1,1,1,
+            1,0,0,0,0,
+            1,0,0,0,0
+        ],
+        [
+            1,1,1,1,1,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,0,0,1,1,
+            1,1,1,1,1
+        ],
+        [
+            1,1,1,1,1,
+            1,0,0,0,1,
+            1,1,1,1,0,
+            1,0,0,0,1,
+            1,0,0,0,1
+        ],
+        [
+            1,1,1,1,1,
+            1,0,0,0,0,
+            1,1,1,1,1,
+            0,0,0,0,1,
+            1,1,1,1,1
+        ],
+        [
+            1,1,1,1,1,
+            0,0,1,0,0,
+            0,0,1,0,0,
+            0,0,1,0,0,
+            0,0,1,0,0
+        ],
+        [
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,1,1,1,1
+        ],
+        [
+            1,0,0,0,1,
+            1,0,0,0,1,
+            0,1,0,1,0,
+            0,1,0,1,0,
+            0,0,1,0,0
+        ],
+        [
+            1,0,1,0,1,
+            1,0,1,0,1,
+            1,0,1,0,1,
+            1,0,1,0,1,
+            1,1,1,1,1
+        ],
+        [
+            1,0,0,0,1,
+            0,1,0,1,0,
+            0,0,1,0,0,
+            0,1,0,1,0,
+            1,0,0,0,1
+        ],
+        [
+            1,0,0,0,1,
+            0,1,0,1,0,
+            0,0,1,0,0,
+            0,0,1,0,0,
+            0,0,1,0,0
+        ],
+        [
+            1,1,1,1,1,
+            0,0,0,1,0,
+            0,0,1,0,0,
+            0,1,0,0,0,
+            1,1,1,1,1
+        ]
+    ];
+
+    window.addEventListener('load',
+    function () {
+      'use strict';
+      const WIDTH = 192;
+      const HEIGHT = 256;
+      var screen_width;
+      var screen_height;
+      const INITIAL_REMAINS = 9;
+      var remains = INITIAL_REMAINS;
+      var score = 0;
+      var stage = 0;
+      var renderer;
+      var x = 0;
+      var y = 0;
+      var px;// paddle x pos
+      var speed = 2;
+      var dx = Math.cos(Math.PI / 4 ) * speed;
+      var dy = Math.sin(Math.PI / 4 ) * speed;
+
+      function calcScreenSize() {
+        screen_width = document.body.clientWidth - 8;
+        screen_height = document.body.clientHeight - 8;
+        if (screen_width >= screen_height) {
+          screen_width = screen_height * WIDTH / HEIGHT;
+        } else {
+          screen_height = screen_width * HEIGHT / WIDTH;
+        }
+      }
+
+      calcScreenSize();
+
+      initAudio(window);
+      SF.audio.start();
+
+      renderer = new THREE.WebGLRenderer({ antialias: false /*, sortObjects: true */ });
+      renderer.setSize(screen_width, screen_height);
+      renderer.setClearColor(0x000000, 1);
+      renderer.domElement.id = 'console';
+      renderer.domElement.style.zIndex = 0;
+      document.body.appendChild(renderer.domElement);
+      renderer.clear();
+      // Pointer Lock API
+      var isPointerLocked = false;
+      var isPointerRequesting = false;
+      var elm = renderer.domElement;//document.body;
+      function pointerLockChange() {
+        if (
+            document.pointerLockElement === elm ||
+            document.mozPointerLockElement === elm ||
+            document.webkitPointerLockElement === elm) {
+          isPointerLocked = true;
+        } else {
+          isPointerLocked = false;
+        }
+        isPointerRequesting = false;
+
+      }
+      document.addEventListener('pointerlockchange',pointerLockChange,false);
+      document.addEventListener('mozpointerlockchange',pointerLockChange,false);
+      document.addEventListener('webkitpointerlockchange',pointerLockChange,false);
+      elm.requestPointerLock = elm.requestPointerLock    ||
+                                elm.mozRequestPointerLock ||
+                                elm.webkitRequestPointerLock;
+
+
+
+      // カメラを工夫し、Z座標が0の時座標指定が仮想画面サイズの位置となるようにする
+      var camera = new THREE.PerspectiveCamera(90, WIDTH / HEIGHT, 0.1, 1000);
+      camera.position.z = HEIGHT / 2;
+      var scene = new THREE.Scene();
+      var geometry = new THREE.PlaneBufferGeometry(4, 4);
+      var material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      var ball = new THREE.Mesh(geometry, material);
+      var ballSegment = {s:new THREE.Vector2(),v:new THREE.Vector2()};
+      var paddleWidth = 32;
+      var paddle = new THREE.Mesh(new THREE.PlaneBufferGeometry(paddleWidth, 4), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+      var paddleSegment = { s:new THREE.Vector2(),v:new THREE.Vector2(32,0)};
+      var paddlePosY = -100;
+
+      var blocks = [];
+      paddle.position.y = paddlePosY;
+
+      // ブロックの生成
+      var blockWidth = 16;
+      var blockHeight = 5;
+      var blockGeometry = new THREE.PlaneBufferGeometry(blockWidth-2,blockHeight-1);
+      var blockMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+
+      for(var y = 70;y < 110;y += 5){
+        for(var x = (-96 + 8);x < (-96 + 16 * 12 + 8);x += 16){
+          var mesh = new THREE.Mesh(blockGeometry,blockMaterial);
+          mesh.position.x = x;
+          mesh.position.y = y;
+          mesh.visible = false;
+          blocks.push({
+            mesh:mesh,
+            pos:new THREE.Vector2(x,y),
+            rect:{left:x - blockWidth/2,top:y + blockHeight/2,right:x + blockWidth/2,bottom:y - blockHeight/2},
+            segment:[
+              { s: new THREE.Vector2(x - blockWidth/2,y + blockHeight/2),v:new THREE.Vector2(blockWidth,0)},
+              { s: new THREE.Vector2(x - blockWidth/2,y - blockHeight/2),v:new THREE.Vector2(blockWidth,0)},
+              { s: new THREE.Vector2(x - blockWidth/2,y + blockHeight/2),v:new THREE.Vector2(0,blockHeight)},
+              { s: new THREE.Vector2(x + blockWidth/2,y + blockHeight/2),v:new THREE.Vector2(0,blockHeight)},
             ]
-        ];
+          });
+          scene.add(mesh);
+        }
+      }
 
-        window.addEventListener('load',
-        function () {
-          'use strict';
-            const WIDTH = 192;
-            const HEIGHT = 256;
-            var screen_width;
-            var screen_height;
-            var remain = 3;
-            var score = 0;
-            var renderer;
-            var x = 0;
-            var y = 0;
-            var px;// paddle x pos
-            var speed = 2;
-            var dx = Math.cos(Math.PI / 4 ) * speed;
-            var dy = Math.sin(Math.PI / 4 ) * speed;
+      blocks.rect = {left:-96+8,top:110+5,right:-96+16 * 12 + 8,bottom:60-5};
 
-            function calcScreenSize() {
-                screen_width = document.body.clientWidth - 8;
-                screen_height = document.body.clientHeight - 8;
-                if (screen_width >= screen_height) {
-                    screen_width = screen_height * WIDTH / HEIGHT;
+      blocks.show = function(){
+        this.forEach(function(elm){
+          elm.mesh.visible = true;
+        });
+      }
+
+      blocks.hide = function(){
+        this.forEach(function(elm){
+          elm.mesh.visible = false;
+        });
+      }
+
+      // 文字コード -> mesh 変換
+      var asciiCharObjs4 = [];
+      var asciiCharObjs2 = [];
+      var asciiGeometry2 = new THREE.PlaneBufferGeometry(2, 2);
+      var asciiGeometry4 = new THREE.PlaneBufferGeometry(4,4);
+
+      for(var i = 0,l = ASCII_CHARS.length;i < l;++i ){
+        var c2 = new THREE.Object3D();
+        var c4 = new THREE.Object3D();
+        asciiCharObjs2.push(c2);
+        asciiCharObjs4.push(c4);
+        for(var cy = 0;cy < 5;++cy){
+          for(var cx = 0;cx < 5;++cx){
+            if(ASCII_CHARS[i][cy * 5 + cx]){
+              var mesh = new THREE.Mesh(asciiGeometry2,material);
+              mesh.position.x = cx * 2;
+              mesh.position.y = 10 - cy * 2;
+              c2.add(mesh);
+              var mesh = new THREE.Mesh(asciiGeometry4,material);
+              mesh.position.x = cx * 4;
+              mesh.position.y = 10 - cy * 4;
+              c4.add(mesh);
+
+            }
+          }
+        }
+      }
+
+      function createStringMesh(str,size){
+        if(!size)  size = 2;
+        var strObj = new THREE.Object3D();
+        var asciiChars = size == 4?asciiCharObjs4:asciiCharObjs2;
+        for(var i = 0,l = str.length;i < l;++i){
+          var sx = i * 6 * size;
+          var c = str.charCodeAt(i) - 0x20;
+          var co = asciiChars[c].clone();
+          co.position.x = sx;
+          strObj.add(co);
+        }
+        return strObj;
+      }
+
+
+      // PRESS_MOUSE 文字列
+      const PRESS_MOUSE = 'PRESS MOUSE BTN';
+      var pressMouse = createStringMesh(PRESS_MOUSE);
+      pressMouse.position.x = - PRESS_MOUSE.length  * 2 * 6 / 2;
+      pressMouse.position.y = 0;
+      scene.add(pressMouse);
+
+      // Title
+      const TITLE = 'BLOCKS';
+      var titleObj = createStringMesh(TITLE,4);
+      titleObj.position.x = - TITLE.length  * 4 * 6 / 2;
+      titleObj.position.y = 70;
+      scene.add(titleObj);
+
+      // GAME OVER
+      const GAME_OVER = 'GAME OVER';
+      var gameOverObj = createStringMesh(GAME_OVER,2);
+      gameOverObj.position.x = - GAME_OVER.length  * 2 * 6 / 2;
+      gameOverObj.position.y = 40;
+      scene.add(gameOverObj);
+
+      // CLEAR
+      const CLEAR = 'CLEAR';
+      var clearObj = createStringMesh(CLEAR,2);
+      clearObj.position.x = - CLEAR.length  * 2 * 6 / 2;
+      clearObj.position.y = 40;
+      scene.add(clearObj);
+
+
+
+      // スコア表示用
+      var scoreObj = new THREE.Object3D();
+      for(var i = 0;i < 5;++i){
+        var sx = i * 6 * 2;
+        var digit = new THREE.Object3D();
+        scoreObj.add(digit);
+        for(var j = 0;j < 10;++j){
+          var n = asciiCharObjs2[0x10 + j].clone();
+          n.position.x = sx;
+          n.visible = false;
+          digit.add(n);
+        }
+      }
+      scoreObj.position.y = 110;
+      scoreObj.position.x = - 6 * 2 * 5 / 2;
+      scoreObj.children[0].children[0].visible = true;
+      scoreObj.children[1].children[0].visible = true;
+      scoreObj.children[2].children[0].visible = true;
+      scoreObj.children[3].children[0].visible = true;
+      scoreObj.children[4].children[0].visible = true;
+
+      scene.add(scoreObj);
+      var scoreBackup = score;
+      function updateScore(){
+        if(score > 99999){
+          score = 99999;
+        }
+
+        var c5 = parseInt(score / 10000) % 10;
+        var c4 = parseInt(score / 1000) % 10;
+        var c3 = parseInt(score / 100) % 10;
+        var c2 = parseInt(score / 10) % 10;
+        var c1 = parseInt(score) % 10;
+
+        var b5 = parseInt(scoreBackup / 10000) % 10;
+        var b4 = parseInt(scoreBackup / 1000) % 10;
+        var b3 = parseInt(scoreBackup / 100) % 10;
+        var b2 = parseInt(scoreBackup / 10) % 10;
+        var b1 = parseInt(scoreBackup) % 10;
+
+        scoreObj.children[0].children[b5].visible = false;
+        scoreObj.children[0].children[c5].visible = true;
+        scoreObj.children[1].children[b4].visible = false;
+        scoreObj.children[1].children[c4].visible = true;
+        scoreObj.children[2].children[b3].visible = false;
+        scoreObj.children[2].children[c3].visible = true;
+        scoreObj.children[3].children[b2].visible = false;
+        scoreObj.children[3].children[c2].visible = true;
+        scoreObj.children[4].children[b1].visible = false;
+        scoreObj.children[4].children[c1].visible = true;
+
+        scoreBackup = score;
+
+      }
+
+      // 残数表示
+      var remainObj = new THREE.Object3D();
+      for(var j = 0;j < 10;++j){
+        var n = asciiCharObjs2[j + 0x10].clone();
+        n.visible = false;
+        remainObj.add(n);
+      }
+      remainObj.position.y = -124;
+      remainObj.position.x = 70;
+      var remainBackup = 0;
+      function updateRemain(){
+        remainObj.children[remains].visible = true;
+        remainObj.children[remainBackup].visible = false;
+        remainBackup = remains;
+      }
+      scene.add(remainObj);
+
+      var dpx = 0;
+      elm.addEventListener('mousemove', function (e) {
+        if(isPointerLocked){
+          var movementX = e.movementX       ||
+                          e.mozMovementX    ||
+                          e.webkitMovementX ||
+                          0,
+              movementY = e.movementY       ||
+                          e.mozMovementY    ||
+                          e.webkitMovementY ||
+                          0;
+          dpx = movementX;
+          px += movementX;
+          if(px < ( -WIDTH / 2)) px = - WIDTH / 2;
+          if(px > (  WIDTH  / 2)) px = WIDTH / 2;
+        } else {
+          var ex = e.clientX;
+          var ey = e.clientY;
+          var rect = e.target.getBoundingClientRect();
+          ex -= rect.left;
+          ey -= rect.top;
+          dpx = px;
+          px = ex * WIDTH / screen_width - WIDTH / 2;
+          dpx = px - dpx;
+
+        }
+        //paddle.position.x = x * WIDTH / screen_width - WIDTH / 2;
+      });
+
+      var click = false;
+      elm.addEventListener('click',function(){
+        click = true;
+        if((!isPointerLocked) &&  elm.requestPointerLock){
+          isPointerRequesting = true;
+          elm.requestPointerLock();
+        } else {
+          isPointerRequesting = false;
+        }
+      });
+
+      function mouseCheck(){
+        var ret = click;
+        click = false;
+        return ret;
+      }
+
+
+      window.addEventListener('resize', function () {
+        calcScreenSize();
+        renderer.setSize(screen_width, screen_height);
+      });
+
+      scene.add(ball);
+      scene.add(paddle);
+
+      //
+      // SF.sequencer.load(SF.seqData);
+      SF.sequencer.start();
+
+      // ジェネレータによるゲームメインの実装
+      function* game(){
+        while(true){
+          // init
+          remains = INITIAL_REMAINS;
+          updateRemain();
+          stage = 1;
+          x = 0;
+          y = 0;
+          speed = 2;
+          dx = Math.cos(Math.PI / 4 ) * speed;
+          dy = Math.sin(Math.PI / 4 ) * speed;
+          click =  false;
+          titleObj.visible = true;
+          paddle.visible = false;
+          ball.visible = false;
+          pressMouse.visible = true;
+          remainObj.visible = false;
+          gameOverObj.visible = false;
+          clearObj.visible = false;
+          blocks.hide();
+          blocks.remains = blocks.length;
+          // game start wait
+          var start = false;
+          while(!mouseCheck() && !start){
+            for(var i = 0;i < 10;++i ){
+              if(mouseCheck()){
+                start = true;
+                while(isPointerRequesting){
+                  yield;
+                }
+                break;
+              }
+              yield;
+            }
+            pressMouse.visible = !pressMouse.visible;
+          }
+          score = 0;
+          updateScore();
+          titleObj.visible = false;
+          pressMouse.visible = false;
+          paddle.visible = true;
+          ball.visible = true;
+          remainObj.visible = true;
+          blocks.show();
+
+          // game play
+          while(remains > 0){
+            if(!play()){
+              x = 0;
+              y = 0;
+              dx = Math.abs(dx);
+              dy = Math.abs(dy);
+              remains--;
+              updateRemain();
+            } else {
+              if(blocks.remains == 0){
+                // ゲームクリア
+                ++stage;
+                clearObj.visible = true;
+                var t = 60 * 3;
+                while(--t){
+                  if(!(t % 15)){
+                    clearObj.visible = !clearObj.visible;
+                  }
+                  yield;
+                }
+
+                paddleWidth = 32 - stage * 2;
+                if(paddleWidth < 12) paddleWidth = 12;
+                scene.remove(paddle);
+                paddle = new THREE.Mesh(new THREE.PlaneBufferGeometry(paddleWidth, 4), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                paddleSegment = { s:new THREE.Vector2(),v:new THREE.Vector2(paddleWidth,0)};
+                paddle.position.y = paddlePosY;
+                scene.add(paddle);
+
+                clearObj.visible = false;
+                blocks.remains = blocks.length;
+                blocks.show();
+                speed = 2;
+                x = 0;
+                y = 0;
+                dx = Math.cos(Math.PI / 4 ) * speed;
+                dy = Math.sin(Math.PI / 4 ) * speed;
+                yield;
+              } else {
+                yield;
+              }
+            };
+          }
+          // game over
+          gameOverObj.visible = true;
+          for(var i = 0;i < 5 * 20;++i){
+            yield;
+          }
+          gameOverObj.visible =false;
+          continue;
+        }
+      }
+
+        // ゲームプレイ
+        function play(){
+
+          // ボールの動き
+          var bx = x, by = y;
+          x += dx;
+          y += dy;
+          if (x > (WIDTH / 2) || x < (-WIDTH / 2)) {
+            SF.sequencer.playTracks(SF.soundEffects[1]);
+            dx = -dx;
+            x += dx;
+          }
+
+          if (y > (HEIGHT / 2) ) {
+            SF.sequencer.playTracks(SF.soundEffects[1]);
+            dy = -dy;
+            y += dy;
+          }
+
+          if(y < (-HEIGHT / 2)){
+            return false;
+          }
+
+          ball.position.x = x;
+          ball.position.y = y;
+          ballSegment.s.x = bx;
+          ballSegment.s.y = by;
+          ballSegment.v.x = dx;
+          ballSegment.v.y = dy;
+
+          paddle.position.x = px;
+          paddleSegment.s.x = px - dpx - paddleWidth / 2 ;
+          paddleSegment.s.y = paddlePosY;
+          paddleSegment.v.x = paddleWidth + dpx;
+
+
+          // パドルとの衝突判定
+          var result = colSegments(ballSegment,paddleSegment);
+          if(result){
+            SF.sequencer.playTracks(SF.soundEffects[0]);
+            dy = - dy;
+            dx = (result.pos.x - paddle.position.x)/4;
+            var v = speed / Math.sqrt(dx*dx + dy*dy);
+
+            dy *= v;
+            dx *= v;
+            y = result.pos.y + (1.0 - result.t1) * dy;
+            x = result.pos.x + (1.0 - result.t1) * dx;
+            ball.position.y = y;
+            ball.position.x = x;
+          }
+
+          dpx = 0;
+
+          // ブロックとの衝突判定
+          function colBlock(result,block,topBottom){
+
+            SF.sequencer.playTracks(SF.soundEffects[2]);
+            // 徐々に難易度を上げていく
+            if (speed < 4.0){
+              speed += stage / 40;
+            }
+            if(topBottom){
+              dy = -dy;
+            } else {
+              dx = -dx;
+            }
+            var v = speed / Math.sqrt(dx*dx + dy*dy);
+
+            dy *= v;
+            dx *= v;
+
+            y = result.pos.y + (1.0 - result.t1) * dy;
+            x = result.pos.x + (1.0 - result.t1) * dx;
+            ball.position.y = y;
+            ball.position.x = x;
+            block.mesh.visible = false;
+            ++score;
+            updateScore();
+            blocks.remains--;
+          }
+
+          if(ball.position.y > blocks.rect.bottom){
+            for(var i = 0,l = blocks.length;i < l;++i){
+              var block = blocks[i];
+              var result;
+              if(block.mesh.visible){
+                if(dy > 0){
+                  result = colSegments(ballSegment,block.segment[0]);
+                  if(result){
+                    colBlock(result,block,true);
+                    break;
+                  }
+                  result = colSegments(ballSegment,block.segment[1]);
+                  if(result){
+                    colBlock(result,block,true);
+                    break;
+                  }
                 } else {
-                    screen_height = screen_width * HEIGHT / WIDTH;
+                  result = colSegments(ballSegment,block.segment[1]);
+                  if(result){
+                    colBlock(result,block,true);
+                    break;
+                  }
+                  result = colSegments(ballSegment,block.segment[0]);
+                  if(result){
+                    colBlock(result,block,true);
+                    break;
+                  }
                 }
-            }
+                if(dx > 0){
+                  result = colSegments(ballSegment,block.segment[2]);
+                  if(result){
+                    colBlock(result,block,false);
+                    break;
+                  }
+                  result = colSegments(ballSegment,block.segment[3]);
+                  if(result){
+                    colBlock(result,block,false);
+                    break;
+                  }
 
-            calcScreenSize();
-
-            initAudio(window);
-            SF.audio.start();
-
-            renderer = new THREE.WebGLRenderer({ antialias: false /*, sortObjects: true */ });
-            renderer.setSize(screen_width, screen_height);
-            renderer.setClearColor(0x000000, 1);
-            renderer.domElement.id = 'console';
-            renderer.domElement.style.zIndex = 0;
-            document.body.appendChild(renderer.domElement);
-            renderer.clear();
-            // Pointer Lock API
-            var isPointerLocked = false;
-            var isPointerRequesting = false;
-            var elm = renderer.domElement;//document.body;
-            function pointerLockChange() {
-                if (
-                    document.pointerLockElement === elm ||
-                    document.mozPointerLockElement === elm ||
-                    document.webkitPointerLockElement === elm) {
-                    isPointerLocked = true;
                 } else {
-                    isPointerLocked = false;
+                  result = colSegments(ballSegment,block.segment[3]);
+                  if(result){
+                    colBlock(result,block,false);
+                    break;
+                  }
+                  result = colSegments(ballSegment,block.segment[2]);
+                  if(result){
+                    colBlock(result,block,false);
+                    break;
+                  }
+
                 }
-                isPointerRequesting = false;
-                
+
+              }
             }
-            document.addEventListener('pointerlockchange',pointerLockChange,false);
-            document.addEventListener('mozpointerlockchange',pointerLockChange,false);
-            document.addEventListener('webkitpointerlockchange',pointerLockChange,false);
-            elm.requestPointerLock = elm.requestPointerLock    ||
-                                      elm.mozRequestPointerLock ||
-                                      elm.webkitRequestPointerLock;
+          }
 
+          return true;
+        }
 
+          // 2Dベクトルの外積
+          function crossProduct(v1, v2 ) {
+            return v1.x * v2.y - v1.y * v2.x;
+          }
 
-            // カメラを工夫し、Z座標が0の時座標指定が仮想画面サイズの位置となるようにする
-            var camera = new THREE.PerspectiveCamera(90, WIDTH / HEIGHT, 0.1, 1000);
-            camera.position.z = HEIGHT / 2;
-            var scene = new THREE.Scene();
-            var geometry = new THREE.PlaneBufferGeometry(4, 4);
-            var material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            var ball = new THREE.Mesh(geometry, material);
-            var paddle = new THREE.Mesh(new THREE.PlaneBufferGeometry(32, 4), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-            paddle.position.y = -100;
+          // 線分の衝突
+          // 参考:http://marupeke296.com/COL_2D_No10_SegmentAndSegment.html
+          function colSegments(
+             seg1,          // 線分1
+             seg2          // 線分2
+          ) {
 
-            // 文字コード -> mesh 変換
-            var asciiCharObjs4 = [];
-            var asciiCharObjs2 = [];
-            var asciiGeometry2 = new THREE.PlaneBufferGeometry(2, 2);
-            var asciiGeometry4 = new THREE.PlaneBufferGeometry(4,4);
-
-            for(var i = 0,l = ASCII_CHARS.length;i < l;++i ){
-                var c2 = new THREE.Object3D();
-                var c4 = new THREE.Object3D();
-                asciiCharObjs2.push(c2);
-                asciiCharObjs4.push(c4);
-                for(var cy = 0;cy < 5;++cy){
-                    for(var cx = 0;cx < 5;++cx){
-                        if(ASCII_CHARS[i][cy * 5 + cx]){
-                            var mesh = new THREE.Mesh(asciiGeometry2,material);
-                            mesh.position.x = cx * 2;
-                            mesh.position.y = 10 - cy * 2;
-                            c2.add(mesh);
-                            var mesh = new THREE.Mesh(asciiGeometry4,material);
-                            mesh.position.x = cx * 4;
-                            mesh.position.y = 10 - cy * 4;
-                            c4.add(mesh);
-
-                        }
-                    }
-                }
+            var v = new THREE.Vector2();
+            v.copy(seg2.s);
+            v.sub(seg1.s);
+            var crsV1V2 = crossProduct( seg1.v, seg2.v );
+            if ( crsV1V2 == 0 ) {
+              // 平行状態
+              return false;
             }
 
-            function createStringMesh(str,size){
-                if(!size)  size = 2;
-                var strObj = new THREE.Object3D();
-                var asciiChars = size == 4?asciiCharObjs4:asciiCharObjs2;
-                for(var i = 0,l = str.length;i < l;++i){
-                    var sx = i * 6 * size;
-                    var c = str.charCodeAt(i) - 0x20;
-                    var co = asciiChars[c].clone();
-                    co.position.x = sx;
-                    strObj.add(co);
-                }
-                return strObj;
+            var crsVV1 = crossProduct( v, seg1.v );
+            var crsVV2 = crossProduct( v, seg2.v );
+
+            var t1 = crsVV2 / crsV1V2;
+            var t2 = crsVV1 / crsV1V2;
+
+            const eps = 0.00000;
+            if ( t1 + eps < 0 || t1 - eps > 1 || t2 + eps < 0 || t2 - eps > 1 ) {
+              // 交差していない
+              return false;
             }
+            var pos = new THREE.Vector2();
+            var vec = new THREE.Vector2();
+            pos.copy(seg1.s);
+            vec.copy(seg1.v);
+            return {
+              pos : pos.add(vec.multiplyScalar(t1)),
+              t1 : t1,
+              t2 : t2
+            };
+          }
 
+          //
+          var g = new game();
 
-            // PRESS_MOUSE 文字列
-            const PRESS_MOUSE = 'PRESS MOUSE BTN';
-            var pressMouse = createStringMesh(PRESS_MOUSE);
-            pressMouse.position.x = - PRESS_MOUSE.length  * 2 * 6 / 2;
-            pressMouse.position.y = 0;
-            scene.add(pressMouse);
-
-            // Title
-            const TITLE = 'SQUASH';
-            var titleObj = createStringMesh(TITLE,4);
-            titleObj.position.x = - TITLE.length  * 4 * 6 / 2;
-            titleObj.position.y = 70;
-            scene.add(titleObj);
-
-            // GAME OVER
-            const GAME_OVER = 'GAME OVER';
-            var gameOverObj = createStringMesh(GAME_OVER,2);
-            gameOverObj.position.x = - GAME_OVER.length  * 2 * 6 / 2;
-            gameOverObj.position.y = 40;
-            scene.add(gameOverObj);
-
-
-
-            // スコア表示用
-            var scoreObj = new THREE.Object3D();
-            for(var i = 0;i < 5;++i){
-                var sx = i * 6 * 2;
-                var digit = new THREE.Object3D();
-                scoreObj.add(digit);
-                for(var j = 0;j < 10;++j){
-                    var n = asciiCharObjs2[0x10 + j].clone();
-                    n.position.x = sx;
-                    n.visible = false;
-                    digit.add(n);
-                }
-            }
-            scoreObj.position.y = 110;
-            scoreObj.position.x = - 6 * 2 * 5 / 2;
-            scoreObj.children[0].children[0].visible = true;
-            scoreObj.children[1].children[0].visible = true;
-            scoreObj.children[2].children[0].visible = true;
-            scoreObj.children[3].children[0].visible = true;
-            scoreObj.children[4].children[0].visible = true;
-
-            scene.add(scoreObj);
-            var scoreBackup = score;
-            function updateScore(){
-                if(score > 99999){
-                    score = 99999;
-                }
-
-                var c5 = parseInt(score / 10000) % 10;
-                var c4 = parseInt(score / 1000) % 10;
-                var c3 = parseInt(score / 100) % 10;
-                var c2 = parseInt(score / 10) % 10;
-                var c1 = parseInt(score) % 10;
-
-                var b5 = parseInt(scoreBackup / 10000) % 10;
-                var b4 = parseInt(scoreBackup / 1000) % 10;
-                var b3 = parseInt(scoreBackup / 100) % 10;
-                var b2 = parseInt(scoreBackup / 10) % 10;
-                var b1 = parseInt(scoreBackup) % 10;
-
-                scoreObj.children[0].children[b5].visible = false;
-                scoreObj.children[0].children[c5].visible = true;
-                scoreObj.children[1].children[b4].visible = false;
-                scoreObj.children[1].children[c4].visible = true;
-                scoreObj.children[2].children[b3].visible = false;
-                scoreObj.children[2].children[c3].visible = true;
-                scoreObj.children[3].children[b2].visible = false;
-                scoreObj.children[3].children[c2].visible = true;
-                scoreObj.children[4].children[b1].visible = false;
-                scoreObj.children[4].children[c1].visible = true;
-
-                scoreBackup = score;
-
-            }
-
-            // 残数表示
-            var remainObj = new THREE.Object3D();
-            for(var j = 0;j < 10;++j){
-                var n = asciiCharObjs2[j + 0x10].clone();
-                n.visible = false;
-                remainObj.add(n);
-            }
-            remainObj.position.y = -124;
-            remainObj.position.x = 70;
-            var remainBackup = 0;
-            function updateRemain(){
-                remainObj.children[remain].visible = true;
-                remainObj.children[remainBackup].visible = false;
-                remainBackup = remain;
-            }
-            scene.add(remainObj);
-
-            var dpx = 0;
-            elm.addEventListener('mousemove', function (e) {
-                if(isPointerLocked){
-                    var movementX = e.movementX       ||
-                                    e.mozMovementX    ||
-                                    e.webkitMovementX ||
-                                    0,
-                        movementY = e.movementY       ||
-                                    e.mozMovementY    ||
-                                    e.webkitMovementY ||
-                                    0;
-                    dpx = movementX;
-                    px += movementX;
-                    if(px < ( -WIDTH / 2)) px = - WIDTH / 2;
-                    if(px > (  WIDTH  / 2)) px = WIDTH / 2;
-                } else {
-                    var ex = e.clientX;
-                    var ey = e.clientY;
-                    var rect = e.target.getBoundingClientRect();
-                    ex -= rect.left;
-                    ey -= rect.top;
-                    dpx = px;
-                    px = ex * WIDTH / screen_width - WIDTH / 2;
-                    dpx = px - dpx;
-
-                }
-                //paddle.position.x = x * WIDTH / screen_width - WIDTH / 2;
-            });
-
-            var click = false;
-            elm.addEventListener('click',function(){
-                click = true;
-                if((!isPointerLocked) &&  elm.requestPointerLock){
-                    isPointerRequesting = true;
-                    elm.requestPointerLock();
-                } else {
-                    isPointerRequesting = false;
-                }
-            });
-
-            function mouseCheck(){
-                var ret = click;
-                click = false;
-                return ret;
-            }
-
-
-            window.addEventListener('resize', function () {
-                calcScreenSize();
-                renderer.setSize(screen_width, screen_height);
-            });
-
-            scene.add(ball);
-            scene.add(paddle);
-
-            //
-           // SF.sequencer.load(SF.seqData);
-            SF.sequencer.start();
-
-            // ジェネレータによるゲームメインの実装
-            function* game(){
-                while(true){
-                    // init
-                    remain = 3;
-                    updateRemain();
-                    x = 0;
-                    y = 0;
-                    speed = 2;
-                    dx = Math.cos(Math.PI / 4 ) * speed;
-                    dy = Math.sin(Math.PI / 4 ) * speed;
-                    click =  false;
-                    titleObj.visible = true;
-                    paddle.visible = false;
-                    ball.visible = false;
-                    pressMouse.visible = true;
-                    remainObj.visible = false;
-                    gameOverObj.visible = false;
-                    // game start wait
-                    var start = false;
-                    while(!mouseCheck() && !start){
-                        for(var i = 0;i < 10;++i ){
-                            if(mouseCheck()){
-                                start = true;
-                                while(isPointerRequesting){
-                                    yield;
-                                }
-                                break;
-                            }
-                            yield;
-                        }
-                        pressMouse.visible = !pressMouse.visible;
-                    }
-                    score = 0;
-                    updateScore();
-                    titleObj.visible = false;
-                    pressMouse.visible = false;
-                    paddle.visible = true;
-                    ball.visible = true;
-                    remainObj.visible = true;
-
-                    // game play
-                    while(remain > 0){
-                        if(!play()){
-                            x = 0;
-                            y = 0;
-                            dx = Math.abs(dx);
-                            dy = Math.abs(dy);
-                            remain--;
-                            updateRemain();
-                        } else {
-                            yield;
-                        };
-                    }
-                    // game over
-                    gameOverObj.visible = true;
-                    for(var i = 0;i < 5 * 20;++i){
-                        yield;
-                    }
-                    gameOverObj.visible =false;
-                    continue;
-                }
-            }
-
-                function play(){
-                    // ボールの動き
-                    var bx = x, by = y;
-                    x += dx;
-                    y += dy;
-                    if (x > (WIDTH / 2) || x < (-WIDTH / 2)) {
-                        SF.sequencer.playTracks(SF.soundEffects[1]);
-                        dx = -dx;
-                        x += dx;
-                    }
-
-                    if (y > (HEIGHT / 2) ) {
-                        SF.sequencer.playTracks(SF.soundEffects[1]);
-                        dy = -dy;
-                        y += dy;
-                    }
-
-                    if(y < (-HEIGHT / 2)){
-                        return false;
-                    }
-
-                    ball.position.x = x;
-                    ball.position.y = y;
-
-                    // パドルとの衝突判定
-                    var sx, sy, ex, ey;
-                    if (x >= bx) {
-                        sx = bx - 2;
-                        ex = x + 2;
-                    } else {
-                        sx = x - 2;
-                        ex = bx + 2;
-                    }
-
-                    if (y <= by) {
-                        sy = by - 2;
-                        ey = y + 2;
-                    } else {
-                        sy = y - 2;
-                        ey = by + 2;
-                    }
-                    paddle.position.x = px;
-                    var psx = paddle.position.x - 16, pex = paddle.position.x + 16, psy = paddle.position.y - 2, pey = paddle.position.y + 2;
-                    if (sy <= pey && psy <= ey && sx <= pex && psx <= sx) {
-                        SF.sequencer.playTracks(SF.soundEffects[0]);
-                        // 徐々に難易度を上げていく
-                        if (speed < 3.8){
-                          speed += 0.25;
-                        }
-
-                        y = paddle.position.y + 5 + (paddle.position.y - y);
-                        ball.position.y = y;
-
-                        dy = -dy;
-                        dx = dx - dpx;
-                        // 
-                        var v = speed / Math.sqrt(dx*dx + dy*dy);
-
-                        dy *= v;
-                        dx *= v;
-
-//                        y += dy;
-                        ++score;
-
-                        updateScore();
-                    }
-                    dpx = 0;
-                    return true;
-                }
-
-                //
-                var g = new game();
-
-                function render() {
-                    requestAnimationFrame(render);
-                    renderer.render(scene, camera);
-                    g.next();
-                }
-                render();
-
-            });
-    </script>
+          function render() {
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+            g.next();
+          }
+          render();
+        });
+  </script>
 </body>
 </html>

@@ -764,8 +764,17 @@ function initAudio(global) {
          ENV(0.0001, 0.01, 1.0, 0.0001), GT(-0.999), TONE(0), TEMPO(120), O(6), ST(48), A
        ]
      }
+     ]),
+     // Effect 2 ////////////////////////////////////
+     createTracks.call(sequencer, [
+     {
+       channel: 10,
+       oneshot: true,
+       data: [VOLUME(0.5),
+         ENV(0.0001, 0.01, 1.0, 0.0001), GT(-0.999), TONE(0), TEMPO(120), O(8), ST(48), A
+       ]
+     }
      ])
-
      ];
   }
 
