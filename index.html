@@ -9,6 +9,16 @@
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.js"></script>
   <script type="text/javascript" src="dsp.js"></script>
   <script type="text/javascript" src="audio.js"></script>
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-15457703-11', 'auto');
+  ga('send', 'pageview');
+
+</script>
   <style>
     html {
       width: 100%;
@@ -1032,7 +1042,7 @@
             var t1 = crsVV2 / crsV1V2;
             var t2 = crsVV1 / crsV1V2;
 
-            const eps = 0.00000;
+            const eps = 0.00002;
             if ( t1 + eps < 0 || t1 - eps > 1 || t2 + eps < 0 || t2 - eps > 1 ) {
               // 交差していない
               return false;
