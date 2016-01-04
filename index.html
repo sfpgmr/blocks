@@ -746,8 +746,12 @@
       elm.addEventListener('click',function(){
         click = true;
         if((!isPointerLocked) &&  elm.requestPointerLock){
-          isPointerRequesting = true;
-          elm.requestPointerLock();
+          try {
+            isPointerRequesting = true;
+            elm.requestPointerLock();
+          } catch (e){
+            isPointerRequesting = false;
+          }
         } else {
           isPointerRequesting = false;
         }
