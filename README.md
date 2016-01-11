@@ -1,13 +1,23 @@
-### ブロック崩しを作る
+### ブロック崩し
 
-* あまり面白くない。
-* 下記URLでプレーするほうがま多少面白い。
- [http://bl.ocks.org/sfpgmr/raw/39dfb82a46dda45ea597/](http://bl.ocks.org/sfpgmr/raw/39dfb82a46dda45ea597/)
+HTML5で動作するブロック崩し
 
+### ゲーム起動
+
+ブラウザにて下記URLにアクセスする
+http://github.sfpgmr.net/blocks/
+
+### 操作法
+
+* マウスクリックでゲーム開始
+* マウスでパドルを移動
+
+### 動作確認
+
+* Chrome,Firefox,Edgeで動作を確認
 
 ### 今のところ
 
-* Chrome,Firefoxでは動作
-* Edgeではabout:flagsにて「試験的なJavaScript機能を有効にする」にチェックを入れると動作する。またPointer Lockができない。
+* Edgeではabout:flagsにて「試験的なJavaScript機能を有効にする」にチェックを入れると動作する。
 
 
